@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: taskflow-pro-api
+    runtime: node
+    plan: free
+    repo: https://github.com/abhisek-977788/Taskflow-pro.git
+    branch: main
+    rootDir: server
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 20
+      - key: JWT_EXPIRE
+        value: 7d
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: CLIENT_URL
+        sync: false

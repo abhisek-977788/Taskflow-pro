@@ -17,10 +17,30 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
+app.set('trust proxy', 1);
+
+const parseOrigins = (value) => (value || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = parseOrigins(process.env.CLIENT_URL);
+if (allowedOrigins.length === 0) {
+  allowedOrigins.push('http://localhost:3000', 'http://localhost:5173');
+}
+
+const validateCorsOrigin = (origin, callback) => {
+  if (!origin || allowedOrigins.includes(origin)) {
+    return callback(null, true);
+  }
+
+  return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+};
+
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: validateCorsOrigin,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -58,7 +78,7 @@ io.on('connection', (socket) => {
 // Security middleware
 app.use(helmet({ crossOriginEmbedderPolicy: false }));
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: validateCorsOrigin,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
